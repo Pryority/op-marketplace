@@ -14,7 +14,8 @@
     "test:evm": "truffle test",
     "test:ovm": "truffle test --config truffle-config.ovm.js --network $npm_config_network",
     "exec:evm": "truffle exec",
-    "exec:ovm": "truffle exec $script --config truffle-config.ovm.js --network $npm_config_network"
+    "exec:ovm": "truffle exec $script --config truffle-config.ovm.js --network $npm_config_network",
+    "app": "cd client && npm run dev"
   },
   "repository": {
     "type": "git",
@@ -31,5 +32,8 @@
     "@eth-optimism/plugins": "^0.0.20",
     "@truffle/hdwallet-provider": "^1.6.0",
     "dotenv": "^8.2.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.0"
   }
 }
