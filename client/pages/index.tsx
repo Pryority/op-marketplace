@@ -5,7 +5,8 @@ import Web3Modal from "web3modal";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { getProvider } from "@wagmi/core";
-import { useContract, useContractRead } from "wagmi";
+import { useContract, useContractRead, usePrepareContractWrite, useContractWrite } from "wagmi";
+import { useDebounce } from "usehooks-ts";
 
 import Marketplace from "../contracts/optimism-contracts/Marketplace.json";
 import NFT from "../contracts/optimism-contracts/NFT.json";
@@ -15,7 +16,10 @@ import { MARKETPLACE_ADDRESS, NFT_ADDRESS } from "../../config";
 export default function Home() {
   const provider = getProvider();
   const [nfts, setNfts] = useState<any[] | undefined>();
-  const [tokenId, setTokenId] = useState(0);
+  const [tokenId, setTokenId] = useState(1);
+  const [token_URI, setToken_URI] = useState("");
+  // const debouncedTokenURI = useDebounce(token_URI, "ipfs://as7dgads987ha897sgada");
+
   const [loadingState, setLoadingState] = useState("not-loaded");
   // Get all listed NFTs
   const { data: listedNfts, isError, isLoading } = useContractRead({
@@ -70,6 +74,24 @@ export default function Home() {
     console.log(`Loaded the ${nfts.length} listed NFTs`);
   }
 
+  const { config: mint } = usePrepareContractWrite({
+    address: NFT_ADDRESS,
+    abi: [
+      {
+        name: "mint",
+        type: "function",
+        stateMutability: "nonpayable",
+        inputs: [{ internalType: "string", name: "_tokenURI", type: "string" }],
+        outputs: [],
+      },
+    ],
+    functionName: "mint",
+    args: [token_URI],
+    enabled: Boolean(token_URI),
+  });
+
+  const { write } = useContractWrite(mint);
+
   // async function buyNft(nft: any) {
   //   const web3Modal = new Web3Modal();
   //   const provider = await web3Modal.connect();
@@ -103,6 +125,22 @@ export default function Home() {
         </div>
 
         <div className={"grid h-full space-y-4 md:space-y-8 lg:space-y-12 cursor-default items-between"}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              write?.();
+            }}
+            className="flex flex-col"
+          >
+            <label htmlFor="tokenURI">Token URI</label>
+            <input
+              id="tokenURI"
+              onChange={(e) => setToken_URI(e.target.value)}
+              placeholder="ipfs://8njnaw9u3un31uqv"
+              value={token_URI}
+            />
+            <button disabled={!write}>Mint</button>
+          </form>
           <>
             {listedNfts}
           </>
