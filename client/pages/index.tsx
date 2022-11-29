@@ -1,7 +1,89 @@
 import Head from "next/head";
-import Image from "next/image";
+
+import Web3 from "web3";
+import Web3Modal from "web3modal";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { getProvider } from "@wagmi/core";
+import { useContract, useContractRead } from "wagmi";
+
+import Marketplace from "../contracts/optimism-contracts/Marketplace.json";
+import NFT from "../contracts/optimism-contracts/NFT.json";
+
+import { MARKETPLACE_ADDRESS, NFT_ADDRESS } from "../../config";
 
 export default function Home() {
+  const provider = getProvider();
+  const [nfts, setNfts] = useState<any[] | undefined>();
+  const [tokenId, setTokenId] = useState(0);
+  const [loadingState, setLoadingState] = useState("not-loaded");
+  // Get all listed NFTs
+  const { data: listedNfts, isError, isLoading } = useContractRead({
+    address: MARKETPLACE_ADDRESS,
+    abi: Marketplace?.abi,
+    functionName: "getListedNfts",
+    onSettled(data, error) {
+      console.log("getListedNfts - Settled", { data, error });
+    },
+  });
+
+  const { data: tokenURI, isError: isTokenURIError, isLoading: isLoadingTokenURI } = useContractRead({
+    address: NFT_ADDRESS,
+    abi: NFT?.abi,
+    functionName: "tokenURI",
+    args: [tokenId],
+    onSettled(data, error) {
+      console.log("tokenURI - Settled", { data, error });
+    },
+  });
+
+  useEffect(() => { loadNFTs(); }, []);
+
+  async function loadNFTs() {
+    const web3Modal = new Web3Modal();
+    const provider = await web3Modal.connect();
+    const web3 = new Web3(provider);
+    const networkId = await web3.eth.net.getId();
+
+    // Iterate over the listed NFTs and retrieve their metadata
+    const nfts = await Promise.all(listedNfts.map(async (i: any) => {
+      try {
+        const meta = await axios.get(`${tokenURI}`);
+        const nft = {
+          price: i.price,
+          tokenId: i.tokenId,
+          seller: i.seller,
+          owner: i.buyer,
+          image: meta.data.image,
+          name: meta.data.name,
+          description: meta.data.description,
+        };
+        console.log(`Listed NFT #${i}`, nft);
+        return nft;
+      } catch(err) {
+        console.log(err);
+        return null;
+      }
+    }));
+    setNfts(nfts.filter((nft: any) => nft !== null));
+    setLoadingState("loaded"); 
+    console.log(`Loaded the ${nfts.length} listed NFTs`);
+  }
+
+  // async function buyNft(nft: any) {
+  //   const web3Modal = new Web3Modal();
+  //   const provider = await web3Modal.connect();
+  //   const web3 = new Web3(provider);
+  //   const networkId = await web3.eth.net.getId();
+  //   const accounts = await web3.eth.getAccounts();
+  //   await marketplaceContract?.methods.buyNft(NFT_ADDRESS, nft.tokenId).send({ from: accounts[0], value: nft.price });
+  //   loadNFTs();
+  // }
+
+  useEffect(()=>{
+    // console.log("LISTED: ", listed);
+  }, []);
+
   return (
     <div className='flex flex-col min-h-screen w-full justify-start items-start p-8'>
       <Head>
@@ -21,32 +103,9 @@ export default function Home() {
         </div>
 
         <div className={"grid h-full space-y-4 md:space-y-8 lg:space-y-12 cursor-default items-between"}>
-          <a
-            href="https://nextjs.org/docs/getting-started"
-            className={"flex flex-col cursor-default"}
-          >
-            <h2 className='dependency-section'>HTML/React Framework: Next &rarr;</h2>
-            {/* insert Next bio */}
-            <p className="dependency-description">
-              Next.js is a flexible React framework that gives you building blocks to create fast web applications.
-            </p>
-          </a>
-
-          <a href="https://tailwindcss.com/docs/guides/nextjs" className={"flex flex-col cursor-default"}>
-            <h2 className='dependency-section'>CSS Framework: Tailwind &rarr;</h2>
-            {/* insert tailwind bio */}
-            <p className="dependency-description">
-              A utility-first CSS framework packed with classes like flex, pt-4, text-center and rotate-90 that can be composed to build any design, directly in your markup.
-            </p>
-          </a>
-
-          <a href="https://wagmi.sh/docs/getting-started" className={"flex flex-col cursor-default"}>
-            <h2 className='dependency-section'>Ethereum Access: WAGMI &rarr;</h2>
-            {/* insert wagmi bio */}
-            <p className="dependency-description">
-              wagmi is a collection of React Hooks containing everything you need to start working with Ethereum. wagmi makes it easy to &apos;<span className="underline">Connect Wallet</span>,&apos; display <span className="text-blue-600 font-medium tracking-tight">ENS</span> and balance information, sign messages, interact with contracts, and much more — all with caching, request deduplication, and persistence.
-            </p>
-          </a>
+          <>
+            {listedNfts}
+          </>
         </div>
       </main>
     </div>

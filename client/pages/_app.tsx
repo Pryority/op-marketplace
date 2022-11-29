@@ -1,5 +1,9 @@
 import "../styles/globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
+import type { AppProps } from "next/app";
+
+import Header from "../components/Header";
+
 import { 
   getDefaultWallets, 
   RainbowKitProvider,
@@ -11,19 +15,12 @@ import {
   createClient,
   WagmiConfig,
 } from "wagmi";
+
 import { alchemyProvider } from "wagmi/providers/alchemy";
-import { publicProvider } from "wagmi/providers/public";
-
-import type { AppProps } from "next/app";
-import Header from "../components/Header";
-
 
 const { chains, provider } = configureChains(
-  [chain.mainnet, chain.polygon, chain.optimism, chain.arbitrum],
-  [
-    alchemyProvider({ apiKey: `${process.env.ALCHEMY_ID}`}),
-    publicProvider()
-  ]
+  [chain.mainnet, chain.goerli, chain.polygon, chain.optimism, chain.arbitrum],
+  [alchemyProvider({ apiKey: `${process.env.NEXT_PUBLIC_GOERLI_ALCHEMY_ID}`})]
 );
 
 const { connectors } = getDefaultWallets({

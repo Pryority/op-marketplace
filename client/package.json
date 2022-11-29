@@ -15,14 +15,18 @@
     "@types/react": "18.0.25",
     "@types/react-dom": "18.0.8",
     "add": "^2.0.6",
+    "axios": "^1.2.0",
     "eslint": "^8.0.1",
     "eslint-config-next": "13.0.3",
     "ethers": "^5.7.2",
+    "ipfs-http-client": "^59.0.0",
     "next": "13.0.3",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "typescript": "*",
     "wagmi": "^0.8.1",
+    "web3": "^1.8.1",
+    "web3modal": "^1.9.10",
     "yarn": "^1.22.19"
   },
   "devDependencies": {
